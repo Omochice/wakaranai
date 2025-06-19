@@ -243,7 +243,7 @@ main =
     Browser.application
         { init = init
         , update = update
-        , view = \model -> { title = "激怒した！！！！！！！！！！", body = [ view model ] }
+        , view = \model -> { title = "！！！！！激怒した！！！！！", body = [ view model ] }
         , subscriptions = \_ -> Sub.none
         , onUrlChange = UrlChanged
         , onUrlRequest = LinkClicked
