@@ -1,9 +1,13 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Navigation as Nav
 import Html exposing (Html, blockquote, button, div, h1, input, label, node, p, span, text)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
+import Url
+import Url.Builder as Builder
+import Url.Parser.Query as Query
 
 
 
@@ -14,15 +18,25 @@ type alias Model =
     { name : String
     , firstWord : String
     , secondWord : String
+    , key : Nav.Key
+    , url : Url.Url
     }
 
 
-init : Model
-init =
-    { name = "メロス"
-    , firstWord = "政治"
-    , secondWord = "邪悪"
-    }
+init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init _ url key =
+    let
+        params =
+            parseUrl url
+    in
+    ( { name = Maybe.withDefault "メロス" params.name
+      , firstWord = Maybe.withDefault "政治" params.firstWord
+      , secondWord = Maybe.withDefault "邪悪" params.secondWord
+      , key = key
+      , url = url
+      }
+    , Cmd.none
+    )
 
 
 
@@ -33,19 +47,55 @@ type Msg
     = Name String
     | FirstWord String
     | SecondWord String
+    | LinkClicked Browser.UrlRequest
+    | UrlChanged Url.Url
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Name name ->
-            { model | name = name }
+            let
+                newModel =
+                    { model | name = name }
+            in
+            ( newModel, updateUrl newModel )
 
         FirstWord firstWord ->
-            { model | firstWord = firstWord }
+            let
+                newModel =
+                    { model | firstWord = firstWord }
+            in
+            ( newModel, updateUrl newModel )
 
         SecondWord secondWord ->
-            { model | secondWord = secondWord }
+            let
+                newModel =
+                    { model | secondWord = secondWord }
+            in
+            ( newModel, updateUrl newModel )
+
+        LinkClicked urlRequest ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model, Nav.pushUrl model.key (Url.toString url) )
+
+                Browser.External href ->
+                    ( model, Nav.load href )
+
+        UrlChanged url ->
+            let
+                params =
+                    parseUrl url
+            in
+            ( { model
+                | url = url
+                , name = Maybe.withDefault "メロス" params.name
+                , firstWord = Maybe.withDefault "政治" params.firstWord
+                , secondWord = Maybe.withDefault "邪悪" params.secondWord
+              }
+            , Cmd.none
+            )
 
 
 
@@ -99,6 +149,8 @@ view model =
                 , style "box-shadow" "inset 0 2px 4px rgba(0,0,0,0.06)"
                 ]
                 [ show model.name
+                , text "は激怒した。必ず、かの邪智暴虐の王を除かなければならぬと決意した。"
+                , show model.name
                 , text "には"
                 , show model.firstWord
                 , text "がわからぬ。"
@@ -121,7 +173,7 @@ view model =
                     ]
                     [ text "元の文章（太宰治「走れメロス」）" ]
                 , blockquote []
-                    [ text "メロスには政治がわからぬ。メロスは、村の牧人である。笛を吹き、羊と遊んで暮して来た。けれども邪悪に対しては、人一倍に敏感であった。"
+                    [ text "メロスは激怒した。必ず、かの邪智暴虐の王を除かなければならぬと決意した。メロスには政治がわからぬ。メロスは、村の牧人である。笛を吹き、羊と遊んで暮して来た。けれども邪悪に対しては、人一倍に敏感であった。"
                     ]
                 ]
             ]
@@ -188,8 +240,73 @@ inputGroup labelText inputId msg model =
 
 main : Program () Model Msg
 main =
-    Browser.sandbox
+    Browser.application
         { init = init
         , update = update
-        , view = view
+        , view = \model -> { title = "激怒した！！！！！！！！！！", body = [ view model ] }
+        , subscriptions = \_ -> Sub.none
+        , onUrlChange = UrlChanged
+        , onUrlRequest = LinkClicked
         }
+
+
+type alias Params =
+    { name : Maybe String
+    , firstWord : Maybe String
+    , secondWord : Maybe String
+    }
+
+
+parseUrl : Url.Url -> Params
+parseUrl url =
+    case url.query of
+        Nothing ->
+            { name = Nothing, firstWord = Nothing, secondWord = Nothing }
+
+        Just query ->
+            { name = parseQueryParam "name" query
+            , firstWord = parseQueryParam "firstWord" query
+            , secondWord = parseQueryParam "secondWord" query
+            }
+
+
+parseQueryParam : String -> String -> Maybe String
+parseQueryParam key query =
+    query
+        |> String.split "&"
+        |> List.filterMap
+            (\param ->
+                case String.split "=" param of
+                    [ paramKey, value ] ->
+                        if paramKey == key then
+                            Just (decodeUri value)
+
+                        else
+                            Nothing
+
+                    _ ->
+                        Nothing
+            )
+        |> List.head
+
+
+decodeUri : String -> String
+decodeUri encoded =
+    case Url.percentDecode encoded of
+        Just decoded ->
+            decoded
+
+        Nothing ->
+            encoded
+
+
+updateUrl : Model -> Cmd Msg
+updateUrl model =
+    let
+        queryParams =
+            [ Builder.string "name" model.name
+            , Builder.string "firstWord" model.firstWord
+            , Builder.string "secondWord" model.secondWord
+            ]
+    in
+    Nav.replaceUrl model.key (Builder.relative [] queryParams)
