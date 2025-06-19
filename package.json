@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "elm-live src/Main.elm",
     "test": "echo \"Error: no test specified\" && exit 1",
     "fmt": "elm-format --yes src/**.elm",
     "build": "elm make src/Main.elm --output=dist/index.html"
@@ -13,7 +14,10 @@
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
-    "elm": "0.19.1-6",
-    "elm-format": "^0.8.8"
+    "elm": "0.19.1-6"
+  },
+  "devDependencies": {
+    "elm-format": "^0.8.8",
+    "elm-live": "^4.0.2"
   }
 }
