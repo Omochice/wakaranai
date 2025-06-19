@@ -1,0 +1,5 @@
+onlyBuiltDependencies:
+  - elm
+  - elm-format
+executionEnv:
+  nodeVersion: 22.16.0
