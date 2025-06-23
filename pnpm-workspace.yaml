@@ -1,5 +1,6 @@
+executionEnv:
+  nodeVersion: 22.16.0
 onlyBuiltDependencies:
   - elm
   - elm-format
-executionEnv:
-  nodeVersion: 22.16.0
+  - esbuild
