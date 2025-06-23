@@ -18,6 +18,7 @@
     "elm": "0.19.1-6"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.0.5",
     "@types/node": "^24.0.3",
     "elm-format": "^0.8.8",
     "lightningcss": "^1.30.1",
